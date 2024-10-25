@@ -7,6 +7,7 @@
 int main() {
     stack_t stk = {};
     freopen("text_file/unit_test.txt", "rt", stdin);
+//    freopen("text_file/logger.html", "wt", stderr);
     char action = 0;
     size_t range = 0;
     stack_elem_t item = 0;

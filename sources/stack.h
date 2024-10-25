@@ -6,9 +6,9 @@
 
 #include "commoner.h"
 
-#define CANARY_PROT
-#define HASH_PROT
-#define DEBUG
+// #define CANARY_PROT
+// #define HASH_PROT
+// #define DEBUG
 
 #ifdef DEBUG
 #define ON_DEBUG(...)       __VA_ARGS__

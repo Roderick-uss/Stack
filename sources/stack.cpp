@@ -1,16 +1,17 @@
 #include <assert.h>
 #include <malloc.h>
-#include <stdio.h>
 #include <mem.h>
+#include <stdio.h>
 #include <string.h>
 
-#include "stack.h"
 #include "commoner.h"
+#include "stack.h"
 
 #define MIN_CAPACITY 8 //must be dividible by 8
-#define MAX_CAPACITY 1 << 25
+#define MAX_CAPACITY 1 << 24
 #define HASH_BASE (uint64_t)1e9 + 7
 #define HASH_MOD  1791791791
+//todo POISON
 
 enum ERROR_t {
     PRINT_STACK            = 1<<0,
@@ -62,7 +63,7 @@ static uint64_t calculate_stack_hash(const stack_t* stk) {
 
     return calculate_hash(begin, begin_ignore) ^ (HASH_BASE * calculate_hash(end_ignore, end));
 }
-static uint64_t calculate_data_hash (const stack_t* stk) { //todo hash
+static uint64_t calculate_data_hash (const stack_t* stk) {
     assert(stk);
     assert(stk->data);
     const void* begin = (char*)stk->data;
@@ -148,9 +149,9 @@ static uint32_t stack_dump(const stack_t* stk, uint32_t error_vector) {
 
     #ifdef DEBUG
         {
-            char* PARAMETER_NAME = stk->param_info.param_name;
-            char* FROM_FILE      = stk->param_info.file_name;
-            size_t DECLARED_IN_LINE    =  stk->param_info.file_line;
+            char* PARAMETER_NAME    = stk->param_info.param_name;
+            char* FROM_FILE         = stk->param_info.file_name;
+            size_t DECLARED_IN_LINE =  stk->param_info.file_line;
             PRINT_PARAM("\t", "%s",   FROM_FILE, " ");
             PRINT_PARAM("\t", "%llu", DECLARED_IN_LINE, " ");
             PRINT_PARAM("\t", "%s",   PARAMETER_NAME, " ");
@@ -244,7 +245,7 @@ static uint32_t stack_dump(const stack_t* stk, uint32_t error_vector) {
     {
     const stack_elem_t* data = (stk->data);
     LOG_BLUE("\t{\n");
-    for(size_t i = 0; i < stk->size; ++i)
+    for(size_t i = 0; i < stk->capacity; ++i)
         PRINT_ARR_ELEM("\t\t", STACK_ELEM_SPEC, data, i);
     LOG_BLUE("\t}\n");
     }
@@ -294,11 +295,13 @@ static int debug_ctor(debug_t* deb DEBUG_PARAMS) {
 
     deb->file_name  = (char*)calloc(strlen(file_name)  + 1, sizeof(char));
     deb->param_name = (char*)calloc(strlen(param_name) + 1, sizeof(char));
-    if(!deb->param_name) return 1;
-    if(!deb->file_name)  return 1;
 
-    strcpy(deb->file_name,  file_name);
+    if(!deb->file_name)  return 1;
+    if(!deb->param_name) return 1;
+
+    strcpy(deb->file_name,  file_name );
     strcpy(deb->param_name, param_name);
+
     deb->file_line  =  file_line;
 
 //    *deb = {&file_name_, &param_name_, file_line};
@@ -364,7 +367,7 @@ int stack_pop(stack_t* stk, stack_elem_t* item) {
     *item = stk->data[stk->size];
     stk->data[stk->size] = 0;
 
-    if (stk->capacity != MIN_CAPACITY && stk->capacity == stk->size / 4) {
+    if (stk->capacity != MIN_CAPACITY && stk->capacity == stk->size * 4) {
         stk->capacity /= 2;
         stack_recalloc(stk);
     }
